@@ -21,27 +21,37 @@ def get_ws_url():
 
     return ws_url
 
-async def main():
+async def main(pair):
     ws_url = get_ws_url()
     last_pong = 0
     default_ping_interval = 10
     async with websockets.connect(ws_url, ssl=ssl_context) as ws:
+        # ping
         await ws.send(json.dumps({
           "id": str(uuid.uuid4()),
           "type": "ping"
         }))
+
+        # subscribe
+        await ws.send(json.dumps({
+          "id": str(uuid.uuid4()),
+          "type": "subscribe",
+          "topic": f"/market/level2:{pair}",
+        }))
+
         while True:
             resp = await ws.recv()
             resp = json.loads(resp)
+            print(resp)
 
             # update last pong
             if (resp["type"] == "pong"):
                 last_pong = time.time()
 
-            print(time.time() - last_pong)
+            should_ping = (time.time() - last_pong) > default_ping_interval
 
             # send ping
-            if (time.time() - last_pong) > default_ping_interval:
+            if should_ping:
                 await ws.send(json.dumps({
                     "id": str(uuid.uuid4()),
                     "type": "ping"
@@ -49,4 +59,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.get_event_loop().run_until_complete(main())
+    pair = "BTC-USDT"
+    asyncio.get_event_loop().run_until_complete(main(pair))
