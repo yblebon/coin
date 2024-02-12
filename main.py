@@ -7,6 +7,7 @@ import json
 import uuid
 import time
 import sys
+import account
 from logbook import warn, info, StreamHandler
 
 ssl_context = ssl.create_default_context()
@@ -64,6 +65,8 @@ async def main(pair):
 
 
 if __name__ == "__main__":
+    # account.get_balance("api_key", "api_secret", "api_passphrase")
+    
     pair = "BTC-USDT".upper()
     currency_1, currency_2 = pair.split("-")
     currency_1_detail = get_currency_detail(currency_1)
