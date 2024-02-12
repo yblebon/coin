@@ -6,6 +6,8 @@ import websockets
 import json
 import uuid
 import time
+import sys
+from logbook import warn, info, StreamHandler
 
 ssl_context = ssl.create_default_context()
 ssl_context.load_verify_locations(certifi.where())
@@ -17,8 +19,6 @@ def get_ws_url():
     endpoint = data['instanceServers'][0]['endpoint']
     ping_interval = data['instanceServers'][0]['pingInterval']
     ws_url = f"{endpoint}/?token={token}"
-    print(data)
-
     return ws_url
 
 async def main(pair):
@@ -42,7 +42,7 @@ async def main(pair):
         while True:
             resp = await ws.recv()
             resp = json.loads(resp)
-            print(resp)
+            info(resp)
 
             # update last pong
             if (resp["type"] == "pong"):
@@ -60,4 +60,5 @@ async def main(pair):
 
 if __name__ == "__main__":
     pair = "BTC-USDT"
+    StreamHandler(sys.stdout).push_application()
     asyncio.get_event_loop().run_until_complete(main(pair))
