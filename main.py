@@ -12,6 +12,11 @@ from logbook import warn, info, StreamHandler
 ssl_context = ssl.create_default_context()
 ssl_context.load_verify_locations(certifi.where())
 
+def get_currency_detail(currency):
+    r = requests.get(f'https://api.kucoin.com/api/v3/currencies/{currency}')
+    data = r.json()
+    return data
+
 def get_ws_url():
     r = requests.post('https://api.kucoin.com/api/v1/bullet-public')
     data = r.json()["data"]
@@ -59,6 +64,9 @@ async def main(pair):
 
 
 if __name__ == "__main__":
-    pair = "BTC-USDT"
+    pair = "BTC-USDT".upper()
+    currency_1, currency_2 = pair.split("-")
+    currency_1_detail = get_currency_detail(currency_1)
+    currency_2_detail = get_currency_detail(currency_2)
     StreamHandler(sys.stdout).push_application()
     asyncio.get_event_loop().run_until_complete(main(pair))
