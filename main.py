@@ -3,6 +3,9 @@ import requests
 import ssl
 import certifi
 import websockets
+import json
+import uuid
+import time
 
 ssl_context = ssl.create_default_context()
 ssl_context.load_verify_locations(certifi.where())
@@ -12,24 +15,37 @@ def get_ws_url():
     data = r.json()["data"]
     token = data["token"]
     endpoint = data['instanceServers'][0]['endpoint']
-
+    ping_interval = data['instanceServers'][0]['pingInterval']
     ws_url = f"{endpoint}/?token={token}"
+    print(data)
 
     return ws_url
 
-def ws_conn(url):
-    print(url)
-    with connect(url, ssl=ssl_context) as websocket:
-      websocket.send("Hello world!")
-      message = websocket.recv()
-      print(f"Received: {message}")
-
-
 async def main():
     ws_url = get_ws_url()
+    last_pong = 0
+    default_ping_interval = 10
     async with websockets.connect(ws_url, ssl=ssl_context) as ws:
-        response = await ws.recv()
-        print(response)
+        await ws.send(json.dumps({
+          "id": str(uuid.uuid4()),
+          "type": "ping"
+        }))
+        while True:
+            resp = await ws.recv()
+            resp = json.loads(resp)
+
+            # update last pong
+            if (resp["type"] == "pong"):
+                last_pong = time.time()
+
+            print(time.time() - last_pong)
+
+            # send ping
+            if (time.time() - last_pong) > default_ping_interval:
+                await ws.send(json.dumps({
+                    "id": str(uuid.uuid4()),
+                    "type": "ping"
+                }))
 
 
 if __name__ == "__main__":
