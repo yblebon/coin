@@ -9,6 +9,8 @@ import time
 import sys
 import account
 import tomllib
+import click
+
 from logbook import warn, info, StreamHandler
 
 ssl_context = ssl.create_default_context()
@@ -24,7 +26,7 @@ class Task_1():
         info("initialization ...")
         env = load_env()
         credentials = env['credentials']
-        currency_1, currency_2 = pair.split("-")
+        currency_1, currency_2 = self.pair.split("-")
 
         currency_1_detail = get_currency_detail(currency_1)
         currency_2_detail = get_currency_detail(currency_2)
@@ -36,8 +38,8 @@ class Task_1():
         self.balance[currency_1] = currency_1_balance
         self.balance[currency_2] = currency_2_balance
 
-    def run(self):
-        pass
+    async def run(self, event):
+        info(f"event received: {event}")
 
 def load_env():
     with open(".env.toml", "rb") as f:
@@ -58,7 +60,7 @@ def get_ws_url():
     ws_url = f"{endpoint}/?token={token}"
     return ws_url
 
-async def main(pair, task=None):
+async def task_runner(pair, task=None):
     task.init()
     ws_url = get_ws_url()
     last_pong = 0
@@ -80,7 +82,6 @@ async def main(pair, task=None):
         while True:
             resp = await ws.recv()
             resp = json.loads(resp)
-            info(resp)
 
             # update last pong
             if (resp["type"] == "pong"):
@@ -95,11 +96,19 @@ async def main(pair, task=None):
                     "type": "ping"
                 }))
 
+            await task.run(resp)
 
+
+
+@click.command()
+@click.option('--pair', default="BTC-USDT", help='Currencies pair')
+def main(pair):
+    """Simple program that listen that execute a task on market data level 2 event."""
+    pair = pair.upper()
+    StreamHandler(sys.stdout).push_application()
+    asyncio.get_event_loop().run_until_complete(task_runner(pair, task=Task_1(pair)))
 
 
 if __name__ == "__main__":
-    pair = "BTC-USDT".upper()
-    StreamHandler(sys.stdout).push_application()
-    asyncio.get_event_loop().run_until_complete(main(pair, task=Task_1(pair)))
+    main()
     
