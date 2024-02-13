@@ -24,27 +24,22 @@ class Task_1():
 
     def init(self):
         info("initialization ...")
-        env = load_env()
-        credentials = env['credentials']
         currency_1, currency_2 = self.pair.split("-")
 
         currency_1_detail = get_currency_detail(currency_1)
         currency_2_detail = get_currency_detail(currency_2)
 
-        balance = account.get_balance(credentials['key'], credentials['secret'], credentials['passphrase'])
+        balance = account.get_balance()
         currency_1_balance = account.find_balance(balance, currency_1)
         currency_2_balance = account.find_balance(balance, currency_2)
+
+        info(balance)
 
         self.balance[currency_1] = currency_1_balance
         self.balance[currency_2] = currency_2_balance
 
     async def run(self, event):
         info(f"event received: {event}")
-
-def load_env():
-    with open(".env.toml", "rb") as f:
-        data = tomllib.load(f)
-        return data
 
 def get_currency_detail(currency):
     r = requests.get(f'https://api.kucoin.com/api/v3/currencies/{currency}')
@@ -65,6 +60,7 @@ async def task_runner(pair, task=None):
     ws_url = get_ws_url()
     last_pong = 0
     default_ping_interval = 10
+    account.place_buy_order(pair, 344444, 0.4)
     async with websockets.connect(ws_url, ssl=ssl_context) as ws:
         # ping
         await ws.send(json.dumps({
@@ -104,6 +100,7 @@ async def task_runner(pair, task=None):
 @click.option('--pair', default="BTC-USDT", help='Currencies pair')
 def main(pair):
     """Simple program that listen that execute a task on market data level 2 event."""
+    account.load_env()
     pair = pair.upper()
     StreamHandler(sys.stdout).push_application()
     asyncio.get_event_loop().run_until_complete(task_runner(pair, task=Task_1(pair)))
