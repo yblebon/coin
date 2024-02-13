@@ -8,10 +8,17 @@ import uuid
 import time
 import sys
 import account
+import tomllib
 from logbook import warn, info, StreamHandler
 
 ssl_context = ssl.create_default_context()
 ssl_context.load_verify_locations(certifi.where())
+
+
+def load_env():
+    with open(".env.toml", "rb") as f:
+        data = tomllib.load(f)
+        return data
 
 def get_currency_detail(currency):
     r = requests.get(f'https://api.kucoin.com/api/v3/currencies/{currency}')
@@ -65,7 +72,9 @@ async def main(pair):
 
 
 if __name__ == "__main__":
-    # account.get_balance("api_key", "api_secret", "api_passphrase")
+    env = load_env()
+    credentials = env['credentials']
+    account.get_balance(credentials['key'], credentials['secret'], credentials['passphrase'])
     
     pair = "BTC-USDT".upper()
     currency_1, currency_2 = pair.split("-")
