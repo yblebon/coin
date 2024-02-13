@@ -20,5 +20,13 @@ def get_balance(api_key, api_secret, api_passphrase):
     }
 
     response = requests.request('get', url, headers=headers)
-    print(response.status_code)
-    print(response.json())
+    return response.json()
+
+
+def find_balance(balance, currency):
+    currency_balance = list(filter(lambda x: x['currency'] == currency, balance['data']))
+    if currency_balance:
+        return currency_balance[0]
+    else:
+        return {} 
+

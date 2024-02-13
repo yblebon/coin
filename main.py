@@ -71,14 +71,28 @@ async def main(pair):
                 }))
 
 
-if __name__ == "__main__":
+def run_task_1():
     env = load_env()
     credentials = env['credentials']
-    account.get_balance(credentials['key'], credentials['secret'], credentials['passphrase'])
-    
     pair = "BTC-USDT".upper()
     currency_1, currency_2 = pair.split("-")
+
     currency_1_detail = get_currency_detail(currency_1)
     currency_2_detail = get_currency_detail(currency_2)
+
+    balance = account.get_balance(credentials['key'], credentials['secret'], credentials['passphrase'])
+    currency_1_balance = account.find_balance(balance, currency_1)
+    currency_2_balance = account.find_balance(balance, currency_2)
+
+    print(currency_1_balance)
+    print(currency_2_balance)
+
+
     StreamHandler(sys.stdout).push_application()
     asyncio.get_event_loop().run_until_complete(main(pair))
+
+
+
+if __name__ == "__main__":
+    run_task_1()
+    
