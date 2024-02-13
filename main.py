@@ -15,6 +15,30 @@ ssl_context = ssl.create_default_context()
 ssl_context.load_verify_locations(certifi.where())
 
 
+class Task_1():
+    def __init__(self, pair):
+        self.pair = pair
+        self.balance = {}
+
+    def init(self):
+        info("initialization ...")
+        env = load_env()
+        credentials = env['credentials']
+        currency_1, currency_2 = pair.split("-")
+
+        currency_1_detail = get_currency_detail(currency_1)
+        currency_2_detail = get_currency_detail(currency_2)
+
+        balance = account.get_balance(credentials['key'], credentials['secret'], credentials['passphrase'])
+        currency_1_balance = account.find_balance(balance, currency_1)
+        currency_2_balance = account.find_balance(balance, currency_2)
+
+        self.balance[currency_1] = currency_1_balance
+        self.balance[currency_2] = currency_2_balance
+
+    def run(self):
+        pass
+
 def load_env():
     with open(".env.toml", "rb") as f:
         data = tomllib.load(f)
@@ -34,7 +58,8 @@ def get_ws_url():
     ws_url = f"{endpoint}/?token={token}"
     return ws_url
 
-async def main(pair):
+async def main(pair, task=None):
+    task.init()
     ws_url = get_ws_url()
     last_pong = 0
     default_ping_interval = 10
@@ -71,28 +96,10 @@ async def main(pair):
                 }))
 
 
-def run_task_1():
-    env = load_env()
-    credentials = env['credentials']
-    pair = "BTC-USDT".upper()
-    currency_1, currency_2 = pair.split("-")
-
-    currency_1_detail = get_currency_detail(currency_1)
-    currency_2_detail = get_currency_detail(currency_2)
-
-    balance = account.get_balance(credentials['key'], credentials['secret'], credentials['passphrase'])
-    currency_1_balance = account.find_balance(balance, currency_1)
-    currency_2_balance = account.find_balance(balance, currency_2)
-
-    print(currency_1_balance)
-    print(currency_2_balance)
-
-
-    StreamHandler(sys.stdout).push_application()
-    asyncio.get_event_loop().run_until_complete(main(pair))
-
 
 
 if __name__ == "__main__":
-    run_task_1()
+    pair = "BTC-USDT".upper()
+    StreamHandler(sys.stdout).push_application()
+    asyncio.get_event_loop().run_until_complete(main(pair, task=Task_1(pair)))
     
