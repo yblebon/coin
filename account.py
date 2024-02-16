@@ -23,9 +23,13 @@ def load_env():
         api_secret = credentials['secret']
         api_passphrase = credentials['passphrase']
 
-def create_headers(endpoint, method):
+def create_headers(endpoint, method, data_json=None):
     now = int(time.time() * 1000)
     str_to_sign = str(now) + method + endpoint
+
+    if data_json:
+        str_to_sign = str_to_sign + data_json
+
     signature = base64.b64encode(hmac.new(api_secret.encode('utf-8'), str_to_sign.encode('utf-8'), hashlib.sha256).digest())
     passphrase = base64.b64encode(hmac.new(api_secret.encode('utf-8'), api_passphrase.encode('utf-8'), hashlib.sha256).digest())
 
@@ -37,6 +41,9 @@ def create_headers(endpoint, method):
         "KC-API-KEY-VERSION": "2"
     }
 
+    if data_json:
+        headers["Content-Type"] = "application/json"
+
     return headers
 
 def get_balance():
@@ -46,13 +53,13 @@ def get_balance():
 
 
 def place_buy_order(pair, price, quantity, order_type="fok"):
-    headers = create_headers('/api/v1/orders', 'POST')
     payload = {
         'clientOid': str(uuid.uuid4()),
         'side': 'buy',
         'symbol': pair,
         'timeInForce': order_type
     }
+    headers = create_headers('/api/v1/orders', 'POST', data_json=json.dumps(payload))
     r = requests.post(f'https://api.kucoin.com/api/v1/orders', data=json.dumps(payload), headers=headers)
     data = r.json()
     warn(data)
