@@ -11,7 +11,7 @@ import account
 import tomllib
 import click
 
-from logbook import warn, info, StreamHandler
+from logbook import warn, info, debug, error, StreamHandler
 
 ssl_context = ssl.create_default_context()
 ssl_context.load_verify_locations(certifi.where())
@@ -21,6 +21,8 @@ class Task_1():
     def __init__(self, pair):
         self.pair = pair
         self.balance = {}
+        self.initialized = False
+        self.buy = True
 
     def init(self):
         info("initialization ...")
@@ -40,10 +42,18 @@ class Task_1():
 
     async def run(self, event):
         info(f"event received: {event}")
+        if self.buy:
+            r = account.place_buy_order(self.pair, 344444, 0.4)
+            if r['code'] != '200000':
+                error(r)
+            self.buy = False
+
+
 
 def get_currency_detail(currency):
     r = requests.get(f'https://api.kucoin.com/api/v3/currencies/{currency}')
     data = r.json()
+    debug(data)
     return data
 
 def get_ws_url():
@@ -60,7 +70,6 @@ async def task_runner(pair, task=None):
     ws_url = get_ws_url()
     last_pong = 0
     default_ping_interval = 10
-    account.place_buy_order(pair, 344444, 0.4)
     async with websockets.connect(ws_url, ssl=ssl_context) as ws:
         # ping
         await ws.send(json.dumps({

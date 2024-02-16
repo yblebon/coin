@@ -6,7 +6,7 @@ import requests
 import tomllib
 import uuid
 import json
-from logbook import warn, info
+from logbook import warn, info, debug
 
 api_secret = None
 api_key = None
@@ -48,8 +48,10 @@ def create_headers(endpoint, method, data_json=None):
 
 def get_balance():
     headers = create_headers('/api/v1/accounts', 'GET')
-    response = requests.request('get', 'https://api.kucoin.com/api/v1/accounts', headers=headers)
-    return response.json()
+    r = requests.request('get', 'https://api.kucoin.com/api/v1/accounts', headers=headers)
+    data = r.json()
+    debug(data)
+    return data
 
 
 def place_buy_order(pair, price, quantity, order_type="fok"):
@@ -62,7 +64,7 @@ def place_buy_order(pair, price, quantity, order_type="fok"):
     headers = create_headers('/api/v1/orders', 'POST', data_json=json.dumps(payload))
     r = requests.post(f'https://api.kucoin.com/api/v1/orders', data=json.dumps(payload), headers=headers)
     data = r.json()
-    warn(data)
+    debug(data)
     return data
 
 def find_balance(balance, currency):
