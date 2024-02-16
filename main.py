@@ -10,6 +10,8 @@ import sys
 import account
 import tomllib
 import click
+from collections import deque
+from operator import itemgetter
 
 from logbook import warn, info, debug, error, StreamHandler
 
@@ -19,19 +21,22 @@ ssl_context.load_verify_locations(certifi.where())
 class Book():
     def __init__(self, pair):
         self.pair = pair
-        self.asks  = None
-        self.bids = None
+        self.asks  = deque(maxlen=10)
+        self.bids = deque(maxlen=10)
 
-    def update_book(self):
-        pass
+    def update_asks(self, tick):
+        self.asks.append(tick) 
+
+    def update_bids(self, tick):
+        self.bids.append(tick)
 
     @property
     def last_ask_price(self):
-        pass
+        return self.asks[0][0]
 
     @property
     def last_bid_price(self):
-        pass
+        return self.bids[0][0]
 
     @property
     def last_bid_qty(self):
@@ -43,11 +48,13 @@ class Book():
 
     @property
     def best_ask_price(self):
-        pass
+        l = sorted(self.asks, key=itemgetter(0))
+        return l[0][0]
 
     @property
     def best_bid_price(self):
-        pass
+        l = sorted(self.bids, key=itemgetter(0))
+        return l[-1][0]
 
 
 class Task_1():
@@ -90,6 +97,12 @@ class Task_1():
 
     async def run(self, event):
         debug(f"event received: {event}")
+        if event['type'] == "message" and event['topic']  == f"/market/level2:{self.pair}":
+            for tick in event['data']['changes']['asks']:
+                self.book.update_asks(tick)
+            for tick in event['data']['changes']['bids']:
+                self.book.update_bids(tick)
+
         if self.buy:
             self.exec_buy(self.pair, 344444, 0.4)
             self.buy = False
