@@ -16,6 +16,39 @@ from logbook import warn, info, debug, error, StreamHandler
 ssl_context = ssl.create_default_context()
 ssl_context.load_verify_locations(certifi.where())
 
+class Book():
+    def __init__(self, pair):
+        self.pair = pair
+        self.asks  = None
+        self.bids = None
+
+    def update_book(self):
+        pass
+
+    @property
+    def last_ask_price(self):
+        pass
+
+    @property
+    def last_bid_price(self):
+        pass
+
+    @property
+    def last_bid_qty(self):
+        pass
+
+    @property
+    def last_ask_qty(self):
+        pass
+
+    @property
+    def best_ask_price(self):
+        pass
+
+    @property
+    def best_bid_price(self):
+        pass
+
 
 class Task_1():
     def __init__(self, pair):
@@ -23,6 +56,7 @@ class Task_1():
         self.currencies = {}
         self.initialized = False
         self.buy = True
+        self.book = Book(self.pair)
 
     def init(self):
         info("initialization ...")
