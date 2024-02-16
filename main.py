@@ -20,31 +20,31 @@ ssl_context.load_verify_locations(certifi.where())
 class Task_1():
     def __init__(self, pair):
         self.pair = pair
-        self.balance = {}
+        self.currencies = {}
         self.initialized = False
         self.buy = True
 
     def init(self):
         info("initialization ...")
         currency_1, currency_2 = self.pair.split("-")
+        self.currencies[currency_1] = {}
+        self.currencies[currency_2] = {}
 
-        currency_1_detail = get_currency_detail(currency_1)
-        currency_2_detail = get_currency_detail(currency_2)
+        self.currencies[currency_1]["detail"] = get_currency_detail(currency_1)
+        self.currencies[currency_2]["detail"] = get_currency_detail(currency_2)
 
         balance = account.get_balance()
-        currency_1_balance = account.find_balance(balance, currency_1)
-        currency_2_balance = account.find_balance(balance, currency_2)
+        self.currencies[currency_1]["balance"] = account.find_balance(balance, currency_1)
+        self.currencies[currency_2]["balance"] = account.find_balance(balance, currency_2)
 
-        info(balance)
+        debug(balance)
 
-        self.balance[currency_1] = currency_1_balance
-        self.balance[currency_2] = currency_2_balance
 
     def sanitize_qty(self, qty):
         return qty
 
     def sanitize_price(self, price):
-        return qty
+        return price
 
 
     def exec_buy(self, pair, price, qty):
@@ -55,7 +55,7 @@ class Task_1():
             error(r)
 
     async def run(self, event):
-        info(f"event received: {event}")
+        debug(f"event received: {event}")
         if self.buy:
             self.exec_buy(self.pair, 344444, 0.4)
             self.buy = False
@@ -119,11 +119,12 @@ async def task_runner(pair, task=None):
 
 @click.command()
 @click.option('--pair', default="BTC-USDT", help='Currencies pair')
-def main(pair):
+@click.option('--log', default="INFO", help='Log level')
+def main(pair, log):
     """Simple program that listen that execute a task on market data level 2 event."""
     account.load_env()
     pair = pair.upper()
-    StreamHandler(sys.stdout).push_application()
+    StreamHandler(sys.stdout, level=log).push_application()
     asyncio.get_event_loop().run_until_complete(task_runner(pair, task=Task_1(pair)))
 
 
