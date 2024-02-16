@@ -40,12 +40,24 @@ class Task_1():
         self.balance[currency_1] = currency_1_balance
         self.balance[currency_2] = currency_2_balance
 
+    def sanitize_qty(self, qty):
+        return qty
+
+    def sanitize_price(self, price):
+        return qty
+
+
+    def exec_buy(self, pair, price, qty):
+        price = self.sanitize_price(price)
+        qty = self.sanitize_qty(qty)
+        r = account.place_buy_order(self.pair, price, qty)
+        if r['code'] != '200000':
+            error(r)
+
     async def run(self, event):
         info(f"event received: {event}")
         if self.buy:
-            r = account.place_buy_order(self.pair, 344444, 0.4)
-            if r['code'] != '200000':
-                error(r)
+            self.exec_buy(self.pair, 344444, 0.4)
             self.buy = False
 
 
