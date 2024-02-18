@@ -67,6 +67,19 @@ def place_buy_order(pair, price, quantity, order_type="fok"):
     debug(data)
     return data
 
+def place_sell_order(pair, price, quantity, order_type="fok"):
+    payload = {
+        'clientOid': str(uuid.uuid4()),
+        'side': 'sell',
+        'symbol': pair,
+        'timeInForce': order_type
+    }
+    headers = create_headers('/api/v1/orders', 'POST', data_json=json.dumps(payload))
+    r = requests.post(f'https://api.kucoin.com/api/v1/orders', data=json.dumps(payload), headers=headers)
+    data = r.json()
+    debug(data)
+    return data
+
 def find_balance(balance, currency):
     currency_balance = list(filter(lambda x: x['currency'] == currency, balance['data']))
     if currency_balance:
