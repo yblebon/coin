@@ -11,71 +11,12 @@ import account
 import tomllib
 import click
 import book
-
+from decimal import localcontext, Decimal, ROUND_DOWN, Context
 from logbook import warn, info, debug, error, StreamHandler
+from tasks import task_1, task_dummy
 
 ssl_context = ssl.create_default_context()
 ssl_context.load_verify_locations(certifi.where())
-
-
-
-class Task_1():
-    def __init__(self, pair):
-        self.pair = pair
-        self.currencies = {}
-        self.initialized = False
-        self.buy = True
-        self.book = book.Book(self.pair)
-
-    def init(self):
-        info("initialization ...")
-        currency_1, currency_2 = self.pair.split("-")
-        self.currencies[currency_1] = {}
-        self.currencies[currency_2] = {}
-
-        self.currencies[currency_1]["detail"] = get_currency_detail(currency_1)
-        self.currencies[currency_2]["detail"] = get_currency_detail(currency_2)
-
-        balance = account.get_balance()
-        self.currencies[currency_1]["balance"] = account.find_balance(balance, currency_1)
-        self.currencies[currency_2]["balance"] = account.find_balance(balance, currency_2)
-
-        debug(balance)
-
-
-    def sanitize_qty(self, qty):
-        return qty
-
-    def sanitize_price(self, price):
-        return price
-
-
-    def exec_buy(self, pair, price, qty):
-        price = self.sanitize_price(price)
-        qty = self.sanitize_qty(qty)
-        r = account.place_buy_order(self.pair, price, qty)
-        if r['code'] != '200000':
-            error(r)
-
-    async def run(self, event):
-        debug(f"event received: {event}")
-        if event['type'] == "message" and event['topic']  == f"/market/level2:{self.pair}":
-            for tick in event['data']['changes']['asks']:
-                self.book.update_asks(tick)
-            for tick in event['data']['changes']['bids']:
-                self.book.update_bids(tick)
-
-        if self.buy:
-            self.exec_buy(self.pair, 344444, 0.4)
-            self.buy = False
-
-
-
-def get_currency_detail(currency):
-    r = requests.get(f'https://api.kucoin.com/api/v3/currencies/{currency}')
-    data = r.json()
-    debug(data)
-    return data
 
 def get_ws_url():
     r = requests.post('https://api.kucoin.com/api/v1/bullet-public')
@@ -87,11 +28,13 @@ def get_ws_url():
     return ws_url
 
 async def task_runner(pair, task=None):
+    info("task runner: started ...")
     task.init()
     ws_url = get_ws_url()
     last_pong = 0
     default_ping_interval = 10
     async with websockets.connect(ws_url, ssl=ssl_context) as ws:
+        info("market price: connected ...")
         # ping
         await ws.send(json.dumps({
           "id": str(uuid.uuid4()),
@@ -134,7 +77,7 @@ def main(pair, log):
     account.load_env()
     pair = pair.upper()
     StreamHandler(sys.stdout, level=log).push_application()
-    asyncio.get_event_loop().run_until_complete(task_runner(pair, task=Task_1(pair)))
+    asyncio.get_event_loop().run_until_complete(task_runner(pair, task=task_dummy.Task(pair)))
 
 
 if __name__ == "__main__":
