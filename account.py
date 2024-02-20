@@ -54,12 +54,15 @@ def get_balance():
     return data
 
 
-def place_buy_order(pair, price, quantity, order_type="fok"):
+def place_buy_order(pair, price, quantity, order_type="market", time_in_force="fok"):
     payload = {
         'clientOid': str(uuid.uuid4()),
         'side': 'buy',
         'symbol': pair,
-        'timeInForce': order_type
+        'price': str(price),
+        'size': str(quantity),
+        'type': order_type,
+        'timeInForce': time_in_force
     }
     headers = create_headers('/api/v1/orders', 'POST', data_json=json.dumps(payload))
     r = requests.post(f'https://api.kucoin.com/api/v1/orders', data=json.dumps(payload), headers=headers)
@@ -67,12 +70,15 @@ def place_buy_order(pair, price, quantity, order_type="fok"):
     debug(data)
     return data
 
-def place_sell_order(pair, price, quantity, order_type="fok"):
+def place_sell_order(pair, price, quantity, order_type="market", time_in_force="fok"):
     payload = {
         'clientOid': str(uuid.uuid4()),
         'side': 'sell',
         'symbol': pair,
-        'timeInForce': order_type
+        'price': str(price),
+        'size': str(quantity),
+        'type': order_type,
+        'timeInForce': time_in_force
     }
     headers = create_headers('/api/v1/orders', 'POST', data_json=json.dumps(payload))
     r = requests.post(f'https://api.kucoin.com/api/v1/orders', data=json.dumps(payload), headers=headers)
