@@ -13,7 +13,7 @@ import click
 import book
 from decimal import localcontext, Decimal, ROUND_DOWN, Context
 from logbook import warn, info, debug, error, StreamHandler
-from tasks import task_1, task_dummy
+from tasks import task_dummy
 
 ssl_context = ssl.create_default_context()
 ssl_context.load_verify_locations(certifi.where())
