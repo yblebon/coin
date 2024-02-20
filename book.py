@@ -2,11 +2,23 @@ from logbook import warn, info, debug, error, StreamHandler
 from collections import deque
 from operator import itemgetter
 
+class EmptyAskPriceException(Exception):
+    pass
+
 class Book():
     def __init__(self, pair):
         self.pair = pair
         self.asks  = deque(maxlen=10)
         self.bids = deque(maxlen=10)
+
+
+    def update(self, event):
+        pair = "-".join(self.pair)
+        if event['type'] == "message" and event['topic']  == f"/market/level2:{pair}":
+            for tick in event['data']['changes']['asks']:
+                self.update_asks([float(x) for x in tick])
+            for tick in event['data']['changes']['bids']:
+                self.update_bids([float(x) for x in tick])
 
     def update_asks(self, tick):
         self.asks.append(tick) 
@@ -16,7 +28,10 @@ class Book():
 
     @property
     def last_ask_price(self):
-        return self.asks[0][0]
+        try:
+            return self.asks[0][0]
+        except IndexError:
+            raise EmptyAskPriceException
 
     @property
     def last_bid_price(self):
