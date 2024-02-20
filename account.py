@@ -12,6 +12,7 @@ api_secret = None
 api_key = None
 api_passphrase = None
 
+
 def load_env():
     global api_key
     global api_secret
@@ -54,36 +55,40 @@ def get_balance():
     return data
 
 
-def place_buy_order(pair, price, quantity, order_type="market", time_in_force="fok"):
+def place_buy_order(pair, price, quantity, order_type='market', time_in_force="fok"):
+    st_time = time.time()
     payload = {
         'clientOid': str(uuid.uuid4()),
         'side': 'buy',
+        'type': order_type,
         'symbol': pair,
         'price': str(price),
-        'size': str(quantity),
-        'type': order_type,
+        'quantity': str(quantity),
         'timeInForce': time_in_force
     }
     headers = create_headers('/api/v1/orders', 'POST', data_json=json.dumps(payload))
     r = requests.post(f'https://api.kucoin.com/api/v1/orders', data=json.dumps(payload), headers=headers)
+    info(f"request duration: {time.time() - st_time}")
     data = r.json()
     debug(data)
     return data
 
-def place_sell_order(pair, price, quantity, order_type="market", time_in_force="fok"):
+def place_sell_order(pair, price, quantity, order_type='limit', time_in_force="fok"):
+    st_time = time.time()
     payload = {
         'clientOid': str(uuid.uuid4()),
         'side': 'sell',
+        'type': order_type,
         'symbol': pair,
         'price': str(price),
-        'size': str(quantity),
-        'type': order_type,
+        'quantity': str(quantity),
         'timeInForce': time_in_force
     }
     headers = create_headers('/api/v1/orders', 'POST', data_json=json.dumps(payload))
     r = requests.post(f'https://api.kucoin.com/api/v1/orders', data=json.dumps(payload), headers=headers)
     data = r.json()
     debug(data)
+    info(f"request duration: {time.time() - st_time}")
     return data
 
 def find_balance(balance, currency):
