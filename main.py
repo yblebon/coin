@@ -10,10 +10,11 @@ import sys
 import account
 import tomllib
 import click
+import importlib
 import book
 from decimal import localcontext, Decimal, ROUND_DOWN, Context
 from logbook import warn, info, debug, error, StreamHandler
-from tasks import task_dummy
+from tasks import task_1, task_dummy
 
 ssl_context = ssl.create_default_context()
 ssl_context.load_verify_locations(certifi.where())
@@ -27,12 +28,23 @@ def get_ws_url():
     ws_url = f"{endpoint}/?token={token}"
     return ws_url
 
-async def task_runner(pair, task=None):
+def load_task_module(task_name):
+    info("task runner: loading module ...")
+    module_name = f'tasks.{task_name}'
+    module = importlib.import_module(module_name)
+    return importlib.reload(module)
+
+async def task_runner(task_name, pair, fund=0):
     info("task runner: started ...")
+
+    module_task = load_task_module(task_name)
+    task = module_task.Task(pair, fund=fund)
     task.init()
+
     ws_url = get_ws_url()
     last_pong = 0
     default_ping_interval = 10
+
     async with websockets.connect(ws_url, ssl=ssl_context) as ws:
         info("market price: connected ...")
         # ping
@@ -71,13 +83,16 @@ async def task_runner(pair, task=None):
 
 @click.command()
 @click.option('--pair', default="BTC-USDT", help='Currencies pair')
+@click.option('--task', default="task_dummy", help='Task')
+@click.option('--prod/--no-prod', default=False)
+@click.option('--fund', default=10, help='Investment fund')
 @click.option('--log', default="INFO", help='Log level')
-def main(pair, log):
+def main(pair, log, task, prod, fund):
     """Simple program that listen that execute a task on market data level 2 event."""
-    account.load_env()
+    account.load_env(prod=prod)
     pair = pair.upper()
     StreamHandler(sys.stdout, level=log).push_application()
-    asyncio.get_event_loop().run_until_complete(task_runner(pair, task=task_dummy.Task(pair)))
+    asyncio.get_event_loop().run_until_complete(task_runner(task, pair, fund=fund))
 
 
 if __name__ == "__main__":
