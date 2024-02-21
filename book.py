@@ -1,16 +1,17 @@
 from logbook import warn, info, debug, error, StreamHandler
 from collections import deque
 from operator import itemgetter
+from tabulate import tabulate
 
 class EmptyAskPriceException(Exception):
     pass
 
 class Book():
-    def __init__(self, pair):
+    def __init__(self, pair, size=10):
         self.pair = pair
-        self.asks  = deque(maxlen=10)
-        self.bids = deque(maxlen=10)
-
+        self.size = size
+        self.asks  = deque(maxlen=self.size)
+        self.bids = deque(maxlen=self.size)
 
     def update(self, event):
         pair = "-".join(self.pair)
@@ -54,3 +55,10 @@ class Book():
     def best_bid_price(self):
         l = sorted(self.bids, key=itemgetter(0))
         return l[-1][0]
+
+    def show(self):
+        print(tabulate(self.asks))
+        print(tabulate(self.bids))
+
+    def is_full(self):
+        return len(self.asks) == self.size and len(self.bids) == self.size
