@@ -11,18 +11,23 @@ from logbook import warn, info, debug
 api_secret = None
 api_key = None
 api_passphrase = None
+api_orders_endpoint = "api/v1/orders/test"
 
 
-def load_env():
+def load_env(prod=False):
     global api_key
     global api_secret
     global api_passphrase
+
     with open(".env.toml", "rb") as f:
         data = tomllib.load(f)
         credentials = data['credentials']
         api_key = credentials['key']
         api_secret = credentials['secret']
         api_passphrase = credentials['passphrase']
+
+    if prod:
+        api_orders_endpoint = "api/v1/orders"
 
 def create_headers(endpoint, method, data_json=None):
     now = int(time.time() * 1000)
@@ -63,11 +68,11 @@ def place_buy_order(pair, price, quantity, order_type='market', time_in_force="f
         'type': order_type,
         'symbol': pair,
         'price': str(price),
-        'quantity': str(quantity),
+        'size': str(quantity),
         'timeInForce': time_in_force
     }
-    headers = create_headers('/api/v1/orders', 'POST', data_json=json.dumps(payload))
-    r = requests.post(f'https://api.kucoin.com/api/v1/orders', data=json.dumps(payload), headers=headers)
+    headers = create_headers(f'/{api_orders_endpoint}', 'POST', data_json=json.dumps(payload))
+    r = requests.post(f'https://api.kucoin.com/{api_orders_endpoint}', data=json.dumps(payload), headers=headers)
     info(f"request duration: {time.time() - st_time}")
     data = r.json()
     debug(data)
@@ -81,11 +86,11 @@ def place_sell_order(pair, price, quantity, order_type='limit', time_in_force="f
         'type': order_type,
         'symbol': pair,
         'price': str(price),
-        'quantity': str(quantity),
+        'size': str(quantity),
         'timeInForce': time_in_force
     }
-    headers = create_headers('/api/v1/orders', 'POST', data_json=json.dumps(payload))
-    r = requests.post(f'https://api.kucoin.com/api/v1/orders', data=json.dumps(payload), headers=headers)
+    headers = create_headers(f'/{api_orders_endpoint}', 'POST', data_json=json.dumps(payload))
+    r = requests.post(f'https://api.kucoin.com/{api_orders_endpoint}', data=json.dumps(payload), headers=headers)
     data = r.json()
     debug(data)
     info(f"request duration: {time.time() - st_time}")
