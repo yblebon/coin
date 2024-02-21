@@ -9,7 +9,7 @@ Result = Enum('Result', ['SUCCESS', 'FAILED'])
 
 
 class Task():
-    def __init__(self, pair):
+    def __init__(self, pair, fund=0):
         self.pair = tuple(pair.split("-"))
         self.currencies = {}
         self.initialized = False
