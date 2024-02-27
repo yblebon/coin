@@ -10,7 +10,6 @@ import sys
 import account
 import click
 import importlib
-import book
 import market
 import asyncio_atexit
 import monitoring
@@ -31,7 +30,6 @@ async def task_runner(task_name, pair, fund=0, monitor=False, print_data=False):
     module_task = load_task_module(task_name)
     task = module_task.Task(pair, fund=fund)
     task.init()
-
 
     if print_data:
         @market.attach
@@ -73,3 +71,4 @@ def main(pair, log, task, prod, fund, monitor):
 
 if __name__ == "__main__":
     main()
+    
