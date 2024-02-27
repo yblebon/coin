@@ -11,22 +11,13 @@ import account
 import click
 import importlib
 import book
-import sys
+import market
+import asyncio_atexit
+import monitoring
 from decimal import localcontext, Decimal, ROUND_DOWN, Context
 from logbook import warn, info, debug, error, StreamHandler
-from tasks import task_dummy
+from tasks import task_1, task_dummy
 
-ssl_context = ssl.create_default_context()
-ssl_context.load_verify_locations(certifi.where())
-
-def get_ws_url():
-    r = requests.post('https://api.kucoin.com/api/v1/bullet-public')
-    data = r.json()["data"]
-    token = data["token"]
-    endpoint = data['instanceServers'][0]['endpoint']
-    ping_interval = data['instanceServers'][0]['pingInterval']
-    ws_url = f"{endpoint}/?token={token}"
-    return ws_url
 
 def load_task_module(task_name):
     info("task runner: loading module ...")
@@ -34,50 +25,34 @@ def load_task_module(task_name):
     module = importlib.import_module(module_name)
     return importlib.reload(module)
 
-async def task_runner(task_name, pair, fund=0):
+async def task_runner(task_name, pair, fund=0, monitor=False, print_data=False):
     info("task runner: started ...")
 
     module_task = load_task_module(task_name)
     task = module_task.Task(pair, fund=fund)
     task.init()
 
-    ws_url = get_ws_url()
-    last_pong = 0
-    default_ping_interval = 10
 
-    async with websockets.connect(ws_url, ssl=ssl_context) as ws:
-        info("market price: connected ...")
-        # ping
-        await ws.send(json.dumps({
-          "id": str(uuid.uuid4()),
-          "type": "ping"
-        }))
+    if print_data:
+        @market.attach
+        async def print_data(msg):
+            print(msg)
 
-        # subscribe
-        await ws.send(json.dumps({
-          "id": str(uuid.uuid4()),
-          "type": "subscribe",
-          "topic": f"/market/level2:{pair}",
-        }))
+    if task:
+        @market.attach
+        async def run_task(msg):
+            await task.run(msg)
 
-        while True:
-            resp = await ws.recv()
-            resp = json.loads(resp)
+    if monitor:
+        @market.attach
+        async def add_tick(msg):
+            await monitoring.add_tick(msg)
 
-            # update last pong
-            if (resp["type"] == "pong"):
-                last_pong = time.time()
+    # run market
+    await market.run(pair)
 
-            should_ping = (time.time() - last_pong) > default_ping_interval
+    asyncio_atexit.register(account.close_session)
 
-            # send ping
-            if should_ping:
-                await ws.send(json.dumps({
-                    "id": str(uuid.uuid4()),
-                    "type": "ping"
-                }))
-
-            await task.run(resp)
 
 
 
@@ -85,16 +60,16 @@ async def task_runner(task_name, pair, fund=0):
 @click.option('--pair', default="BTC-USDT", help='Currencies pair')
 @click.option('--task', default="task_dummy", help='Task')
 @click.option('--prod/--no-prod', default=False)
+@click.option('--monitor/--no-monitor', default=False)
 @click.option('--fund', default=10, help='Investment fund')
 @click.option('--log', default="INFO", help='Log level')
-def main(pair, log, task, prod, fund):
+def main(pair, log, task, prod, fund, monitor):
     """Simple program that listen that execute a task on market data level 2 event."""
     account.load_env(prod=prod)
     pair = pair.upper()
-    StreamHandler(sys.stdout, level=log.upper()).push_application()
-    asyncio.get_event_loop().run_until_complete(task_runner(task, pair, fund=fund))
+    StreamHandler(sys.stdout, level=log).push_application()
+    asyncio.get_event_loop().run_until_complete(task_runner(task, pair, fund=fund, monitor=monitor))
 
 
 if __name__ == "__main__":
     main()
-    
