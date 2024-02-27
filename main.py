@@ -8,13 +8,13 @@ import uuid
 import time
 import sys
 import account
-import tomllib
 import click
 import importlib
 import book
+import sys
 from decimal import localcontext, Decimal, ROUND_DOWN, Context
 from logbook import warn, info, debug, error, StreamHandler
-from tasks import task_1, task_dummy
+from tasks import task_dummy
 
 ssl_context = ssl.create_default_context()
 ssl_context.load_verify_locations(certifi.where())
@@ -91,7 +91,7 @@ def main(pair, log, task, prod, fund):
     """Simple program that listen that execute a task on market data level 2 event."""
     account.load_env(prod=prod)
     pair = pair.upper()
-    StreamHandler(sys.stdout, level=log).push_application()
+    StreamHandler(sys.stdout, level=log.upper()).push_application()
     asyncio.get_event_loop().run_until_complete(task_runner(task, pair, fund=fund))
 
 

@@ -3,3 +3,4 @@ requests
 logbook
 click
 tabulate
+toml

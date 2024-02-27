@@ -3,10 +3,11 @@ import base64
 import hmac
 import hashlib
 import requests
-import tomllib
 import uuid
 import json
-from logbook import warn, info, debug
+import toml
+import sys
+from logbook import warn, info, debug, error
 
 api_secret = None
 api_key = None
@@ -19,12 +20,16 @@ def load_env(prod=False):
     global api_secret
     global api_passphrase
 
-    with open(".env.toml", "rb") as f:
-        data = tomllib.load(f)
-        credentials = data['credentials']
-        api_key = credentials['key']
-        api_secret = credentials['secret']
-        api_passphrase = credentials['passphrase']
+    try:
+        with open(".env.toml", "rb") as f:
+            data = toml.loads(f)
+            credentials = data['credentials']
+            api_key = credentials['key']
+            api_secret = credentials['secret']
+            api_passphrase = credentials['passphrase']
+    except FileNotFoundError:
+        error(f"Missing environment file '.env.toml'")
+        sys.exit(-1)
 
     if prod:
         api_orders_endpoint = "api/v1/orders"
