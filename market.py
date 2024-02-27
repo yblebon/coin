@@ -72,7 +72,14 @@ async def run(pair):
                         "type": "ping"
                     }))
 
-                await publish(resp)
+                # tick 
+                if resp['type'] == "message" and resp['topic']  == f"/market/level2:{pair}":
+                    for tick in resp['data']['changes']['asks']:
+                        date, price, qty = float(resp['data']['time']), float(tick[0]), float(tick[1])
+                        await publish(('A', date, price, qty ))
+                    for tick in resp['data']['changes']['bids']:
+                        date, price, qty = float(resp['data']['time']), float(tick[0]), float(tick[1])
+                        await publish(('B', date, price, qty ))
 
 if __name__ == "__main__":
     StreamHandler(sys.stdout, level="DEBUG").push_application()
