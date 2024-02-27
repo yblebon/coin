@@ -14,12 +14,10 @@ class Book():
         self.bids = deque(maxlen=self.size)
 
     def update(self, event):
-        pair = "-".join(self.pair)
-        if event['type'] == "message" and event['topic']  == f"/market/level2:{pair}":
-            for tick in event['data']['changes']['asks']:
-                self.update_asks([float(x) for x in tick])
-            for tick in event['data']['changes']['bids']:
-                self.update_bids([float(x) for x in tick])
+        if event[0] == 'A':
+            self.update_asks(event[1:])
+        elif event[0] == 'B':
+            self.update_bids(event[1:])
 
     def update_asks(self, tick):
         self.asks.append(tick) 
@@ -30,13 +28,13 @@ class Book():
     @property
     def last_ask_price(self):
         try:
-            return self.asks[0][0]
+            return self.asks[0][1]
         except IndexError:
             raise EmptyAskPriceException
 
     @property
     def last_bid_price(self):
-        return self.bids[0][0]
+        return self.bids[0][1]
 
     @property
     def last_bid_qty(self):
@@ -48,13 +46,13 @@ class Book():
 
     @property
     def best_ask_price(self):
-        l = sorted(self.asks, key=itemgetter(0))
-        return l[0][0]
+        l = sorted(self.asks, key=itemgetter(1))
+        return l[0][1]
 
     @property
     def best_bid_price(self):
-        l = sorted(self.bids, key=itemgetter(0))
-        return l[-1][0]
+        l = sorted(self.bids, key=itemgetter(1))
+        return l[-1][1]
 
     def show(self):
         print(tabulate(self.asks))
