@@ -11,6 +11,7 @@ class Anomaly(Enum):
     WRONG_PRICE = auto()
     WRONG_QTY = auto()
     WRONG_LATENCY = auto()
+    MISSING_EXCHANGE_TIMESTAMP = auto()
 
 @dataclass
 class Currency:
@@ -38,7 +39,7 @@ class Tick:
     price: float
     qty: float
     side: Side
-    ts: float = time.time()
+    exchange_ts: float = None
     created_ts: float = time.time()
 
     def __post_init__(self):
@@ -51,14 +52,14 @@ class Tick:
         return self.side == Side.BUY
     
     def get_date(self):
-        return datetime.fromtimestamp(self.ts)
+        return datetime.fromtimestamp(self.exchange_ts)
     
     def get_ts(self):
         return self.ts
     
     @property
     def latency(self):
-        return self.created_ts - self.ts
+        return self.created_ts - self.exchange_ts
 
     def is_correct(self):
         if self.latency < 0:
@@ -80,7 +81,7 @@ if __name__ == "__main__":
     b = Currency('EXCHANGE', 'btc')
     q = Currency('EXCHANGE', 'usdt')
     print(b)
-    t = Tick('EXCHANGE', b, q, -56.23, 45.45, Side.BUY, ts=1709128420.8183336)
+    t = Tick('EXCHANGE', b, q, -56.23, 45.45, Side.BUY, exchange_ts=1709128420.8183336)
     print(t)
     print(t.is_bid())
     print(t.get_date())
