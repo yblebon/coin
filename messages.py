@@ -23,9 +23,16 @@ class Currency:
         self.exchange = self.exchange.upper()
         self.name = self.name.upper()
 
+    def __repr__(self) -> str:
+        return f"{self.exchange}__{self.name}"
+    
+    def __str__(self) -> str:
+        return f"{self.exchange}__{self.name}"
+
     
 @dataclass
 class Tick:
+    exchange: str
     quote: Currency
     base: Currency
     price: float
@@ -61,12 +68,19 @@ class Tick:
         elif self.qty <= 0:
             return Anomaly.WRONG_QTY
         return True
+    
+    def __repr__(self) -> str:
+        return f"{self.exchange}__{self.base.name}_{self.quote.name}"
+    
+    def __str__(self) -> str:
+        return f"{self.exchange}__{self.base.name}_{self.quote.name}"
 
 
 if __name__ == "__main__":
     b = Currency('EXCHANGE', 'btc')
     q = Currency('EXCHANGE', 'usdt')
-    t = Tick(b, q, -56.23, 45.45, Side.BUY, ts=1709128420.8183336)
+    print(b)
+    t = Tick('EXCHANGE', b, q, -56.23, 45.45, Side.BUY, ts=1709128420.8183336)
     print(t)
     print(t.is_bid())
     print(t.get_date())
