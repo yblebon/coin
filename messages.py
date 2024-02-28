@@ -11,11 +11,16 @@ class Anomaly(Enum):
     WRONG_PRICE = auto()
     WRONG_QTY = auto()
     WRONG_LATENCY = auto()
+
+class Currency(NamedTuple):
+    exchange: str
+    pair: str
+    qty_step: float = None
+    price_precision: float = None
     
 
 class Tick(NamedTuple):
-    exchange: str
-    pair: str
+    currency: Currency
     price: float
     qty: float
     side: Side
@@ -49,7 +54,8 @@ class Tick(NamedTuple):
 
 
 if __name__ == "__main__":
-    t = Tick('exchange', 'btc-usdt', -56.23, 45.45, Side.BUY, ts=1709128420.8183336)
+    c = Currency('EXCHANGE', 'btc-usdt')
+    t = Tick(c, -56.23, 45.45, Side.BUY, ts=1709128420.8183336)
     print(t)
     print(t.is_bid())
     print(t.get_date())
