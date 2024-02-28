@@ -33,8 +33,8 @@ class Currency:
 @dataclass
 class Tick:
     exchange: str
-    quote: Currency
     base: Currency
+    quote: Currency
     price: float
     qty: float
     side: Side
